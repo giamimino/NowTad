@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Source_Sans_3 } from "next/font/google";
 import "./globals.css";
+import SessionProvider from "./components/SessionProvider";
 
 const sourceSans = Source_Sans_3({
   subsets: ["latin"],
@@ -20,7 +21,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${sourceSans.className} bg-[#181818]`}>{children}</body>
+      <body className={`${sourceSans.className} bg-[#181818]`}>
+        <SessionProvider>
+          {children}
+        </SessionProvider>
+      </body>
     </html>
   );
 }

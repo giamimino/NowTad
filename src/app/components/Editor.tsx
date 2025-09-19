@@ -12,39 +12,52 @@ interface EditorProps {
   title: string;
   folder: string;
   createdAt: Date;
+  noteId: string;
+  folderId: string;
 }
 export default function Editor(props: EditorProps) {
-  const notesContext = useContext(NotesContext)
+  const notesContext = useContext(NotesContext);
   if (!notesContext) return null;
   const { content, setContent } = notesContext;
   const [curFont, setCurFont] = useState(16);
-  const [note, setNote] = useState<NoteContext | null>(null)
+  const [note, setNote] = useState<NoteContext | null>(null);
   const editor = useEditor({
     extensions: [StarterKit, TextStyle, FontSize],
-    content: content[0].content,
+    content:
+      content.map((n) => (n.noteId === props.noteId ? n.content : "")) ?? "",
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      const json = editor.getJSON()
+      const json = editor.getJSON();
 
-      setContent((prev) =>
-        prev
-          ? prev.map((n) =>
-              n.noteId === "dwdawdwa"
-                ? {
-                    ...n,
-                    content: json,
-                  }
-                : n
-            )
-          : []
-      );
-    }
-  })
+      setContent((prev) => {
+        if (!prev) return [];
+
+        const exists = prev.some((n) => n.noteId === props.noteId);
+
+        if (exists) {
+          return prev.map(
+            (n) => 
+              n.noteId === props.noteId
+              ? { ...n, content: json } : n
+          )
+        } else {
+          return [
+            ...prev,
+            {
+              noteId: props.noteId,
+              content: json,
+              folderId: props.folderId,
+            },
+          ];
+        }
+      });
+    },
+  });
 
   useEffect(() => {
-    if(curFont === 0 || !curFont) return;
-    editor?.chain().focus().setFontSize(`${curFont}px`).run()
-  }, [curFont])
+    if (curFont === 0 || !curFont) return;
+    editor?.chain().focus().setFontSize(`${curFont}px`).run();
+  }, [curFont]);
   return (
     <div className="p-12.5 flex flex-col gap-7.5 w-full h-full">
       <h1 className="text-nowrap text-white text-3xl font-semibold">
@@ -94,7 +107,9 @@ export default function Editor(props: EditorProps) {
             value={curFont}
             onChange={(e) => {
               const value = Number(e.target.value);
-              setCurFont((prev) => (!isNaN(value) && value < 32 ? value : prev));
+              setCurFont((prev) =>
+                !isNaN(value) && value < 32 ? value : prev
+              );
             }}
             min={1}
             max={28}
@@ -102,13 +117,19 @@ export default function Editor(props: EditorProps) {
           <div className="flex flex-col">
             <button
               className="cursor-pointer text-white"
-              onClick={() => setCurFont((prev) => prev >= 2 || prev <= 28 ? prev + 1 : prev)}
+              onClick={() =>
+                setCurFont((prev) =>
+                  prev >= 2 || prev <= 28 ? prev + 1 : prev
+                )
+              }
             >
               <Icon icon={"mingcute:up-fill"} />
             </button>
             <button
               className="cursor-pointer text-white"
-              onClick={() => setCurFont((prev) => (prev >= 2 ? prev - 1 : prev))}
+              onClick={() =>
+                setCurFont((prev) => (prev >= 2 ? prev - 1 : prev))
+              }
             >
               <Icon icon={"mingcute:down-fill"} />
             </button>

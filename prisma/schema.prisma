@@ -1,0 +1,70 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+ 
+generator client {
+  provider = "prisma-client-js"
+}
+ 
+model User {
+  id            String   @id @default(cuid())
+  name          String?
+  email         String   @unique
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  folders       Folder[]
+  accounts      Account[]
+  favorites     Favorite[]
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  noteId    String
+  user      User     @relation(fields: [userId], references: [id])
+  createdAt DateTime @default(now())
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  folderId  String
+  folder    Folder   @relation(fields: [folderId], references: [id])
+  title     String
+  content   Json
+  cretaedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Folder {
+  id     String @id @default(cuid())
+  userId String
+  title  String
+  user   User   @relation(fields: [userId], references: [id])
+
+  notes Note[]
+}
+
+model Account {
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([provider, providerAccountId])
+}

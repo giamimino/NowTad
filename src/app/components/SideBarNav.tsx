@@ -3,7 +3,12 @@ import React from "react";
 import File from "./ui/File";
 import Folder from "./ui/Folder";
 
-export default function SideBarNav() {
+interface SideBarNavProps {
+  folder: { label: string, id: string }[],
+  recents: { label: string, id: string }[],
+}
+
+export default function SideBarNav(sideBarNavProps: SideBarNavProps) {
   const moreProps = [
     { icon: "tabler:star", label: "Favorites" },
     { icon: "uil:trash", label: "Trash" },
@@ -29,11 +34,14 @@ export default function SideBarNav() {
       <div>
         <h1 className="smallH-1">Recents</h1>
         <div>
-          <File
-            label="Project proposal"
-            id="dwwkdh"
-            select={false}
-          />
+        {sideBarNavProps.recents.map(
+          (r) => (
+            <File
+              {...r}
+              select={false}
+            />
+          )
+        )}
         </div>
       </div>
       <div>
@@ -45,11 +53,14 @@ export default function SideBarNav() {
           />
         </h1>
         <div>
-          <Folder
-            label="Project proposal"
-            id="dwwkdh"
-            select={false}
-          />
+          {sideBarNavProps.folder.map(
+            (f) => (
+              <Folder
+                {...f}
+                select={false}
+              />
+            )
+          )}
         </div>
       </div>
       <div>
