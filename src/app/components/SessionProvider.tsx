@@ -1,14 +1,14 @@
 "use client"
 import React, { useEffect, useState } from 'react'
 import { SessionContext } from '../context/SessionContext'
-import { Session } from 'next-auth'
+import { User } from '../global'
 
 export default function SessionProvider(
   { children }:
   Readonly<{
     children: React.ReactNode
   }>) {
-    const [user, setUser] = useState<Session | null>(null)
+    const [user, setUser] = useState<User | null>(null)
     
     useEffect(() => {
       fetch("/api/getSession").then(res => res.json())
@@ -19,7 +19,7 @@ export default function SessionProvider(
       })
     }, [])
   return (
-    <SessionContext.Provider value={user}>
+    <SessionContext.Provider value={{user, setUser}}>
       {children}
     </SessionContext.Provider>
   )

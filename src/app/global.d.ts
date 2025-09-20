@@ -20,5 +20,5 @@ export interface Recents {
 
 export interface Folder {
   id: string,
-  label: string,
+  title: string,
 }
