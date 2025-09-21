@@ -31,7 +31,6 @@ export async function POST(req: Request) {
       folder: {
         id: folder.id,
         title,
-        userId
       }
     })
   } catch (err) {

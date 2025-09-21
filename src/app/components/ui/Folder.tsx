@@ -6,6 +6,7 @@ interface FolderProps {
   select: boolean;
   id: string;
   onSelect: (id: string) => void
+  dragged: boolean
 }
 
 export default function Folder(props: FolderProps) {
@@ -22,9 +23,9 @@ export default function Folder(props: FolderProps) {
             ? "material-symbols:folder-open-outline"
             : "material-symbols:folder-outline"
         }
-        className="text-xl"
+        className={`text-xl transition duration-300 ${props.dragged ? "text-red-600" : ""}`}
       />
-      <span className={`text-nowrap truncate font-semibold`}>
+      <span className={`text-nowrap truncate font-semibold transition duration-300 ${props.dragged ? "text-red-600" : ""}`}>
         {props.title}
       </span>
     </div>

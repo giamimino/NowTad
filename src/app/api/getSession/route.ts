@@ -18,9 +18,18 @@ export async function GET() {
       select: {
         title: true,
         id: true,
+        notes: {
+          select: {
+            id: true,
+            title: true,
+            preview: true,
+            createdAt: true,
+            updatedAt: true,
+            folderId: true
+          }
+        }
       } 
     })
-
     return NextResponse.json({
       success: true,
       session: {

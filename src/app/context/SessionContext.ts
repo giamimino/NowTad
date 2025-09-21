@@ -7,7 +7,7 @@ interface UserContextType {
 }
 
 
-export const SessionContext = createContext<UserContextType | null>({
+export const SessionContext = createContext<UserContextType>({
   user: null,
   setUser: () => {}
 })

@@ -17,13 +17,16 @@ export async function POST(req: Request) {
       data: {
         title,
         content: "",
-        folder: { connect: { id: folderId } }
+        folder: { connect: { id: folderId } },
+        preview: "No content available."
       },
       select: {
         id: true,
-        cretaedAt: true,
+        preview: true,
+        createdAt: true,
         updatedAt: true,
-        content: true,
+        folderId: true,
+        title: true
       }
     })
 
@@ -33,10 +36,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       success: true,
-      note: {
-        ...note,
-        title
-      }
+      note
     })
   } catch (err) {
     console.log(err);

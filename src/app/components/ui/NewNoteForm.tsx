@@ -2,10 +2,10 @@ import { Icon } from "@iconify/react";
 import React from "react";
 
 interface NewFileFormProps {
-  handleNewFolder: (title: string) => void;
+  handleNewNote: (title: string) => void;
 }
 
-export default function NewFolderForm(props: NewFileFormProps) {
+export default function NewNoteForm(props: NewFileFormProps) {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
@@ -13,7 +13,7 @@ export default function NewFolderForm(props: NewFileFormProps) {
     const title = formData.get("title") as string;
 
     if (title.trim()) {
-      props.handleNewFolder(title)
+      props.handleNewNote(title)
     }
   }
   return (
@@ -23,14 +23,14 @@ export default function NewFolderForm(props: NewFileFormProps) {
     >
       <button type="submit" className="cursor-pointer hover:opacity-80">
         <Icon
-          icon={"material-symbols:folder-open-outline"}
+          icon={"basil:document-outline"}
           className="text-xl"
         />
       </button>
       <input
         id="FolderField"
         name="title"
-        className={`min-w-20 max-w-30 py-0.25 font-semibold text-white px-0.5
+        className={`min-w-25 max-w-35 py-0.25 font-semibold text-white px-0.5
         border-1 border-white/40 focus:outline-none`}
       ></input>
     </form>
