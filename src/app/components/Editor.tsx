@@ -1,56 +1,58 @@
 "use client";
 import { Icon } from "@iconify/react";
 import { FontSize, TextStyle } from "@tiptap/extension-text-style";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, JSONContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React, { useContext, useEffect, useState } from "react";
-import { NotesContext } from "../context/NotesContext";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import useDebounce from "../hooks/useDebounce";
-import { NoteContext } from "../global";
+import { NotesContext } from "../context/NotesContext";
 
 interface EditorProps {
   title: string;
   folder: string;
-  createdAt: Date;
   noteId: string;
   folderId: string;
+  createdAt: Date;
 }
 export default function Editor(props: EditorProps) {
   const notesContext = useContext(NotesContext);
   if (!notesContext) return null;
   const { content, setContent } = notesContext;
   const [curFont, setCurFont] = useState(16);
-  const [note, setNote] = useState<NoteContext | null>(null);
+  const [editorContent, setEditorContent] = useState<JSONContent | null>(null);
+  const debouncedContent = useDebounce(editorContent, 500);
+
+  useEffect(() => {
+    if (!debouncedContent) return;
+    const exist = content.some((n) => n.id === props.noteId)
+
+    setContent((prev) =>
+    [
+      ...prev,
+      {
+        title: props.title,
+        id: props.noteId,
+        createdAt: props.createdAt,
+        updatedAt: props.createdAt,
+        folderId: props.folder,
+        content: debouncedContent,
+      }
+    ]
+    );
+  }, [debouncedContent]);
+
+  const note = useMemo(() => {
+    const result = content.find((n) => n.id === props.noteId);
+
+    return result;
+  }, [content]);
+
   const editor = useEditor({
     extensions: [StarterKit, TextStyle, FontSize],
-    content:
-      content.map((n) => (n.noteId === props.noteId ? n.content : "")) ?? "",
+    content: note?.content ?? "",
     immediatelyRender: false,
     onUpdate: ({ editor }) => {
-      const json = editor.getJSON();
-
-      setContent((prev) => {
-        if (!prev) return [];
-
-        const exists = prev.some((n) => n.noteId === props.noteId);
-
-        if (exists) {
-          return prev.map(
-            (n) => 
-              n.noteId === props.noteId
-              ? { ...n, content: json } : n
-          )
-        } else {
-          return [
-            ...prev,
-            {
-              noteId: props.noteId,
-              content: json,
-              folderId: props.folderId,
-            },
-          ];
-        }
-      });
+      setEditorContent(editor.getJSON());
     },
   });
 
@@ -82,14 +84,12 @@ export default function Editor(props: EditorProps) {
             icon={"material-symbols:folder-outline"}
             className="text-white/60"
           />
-          <span className="text-sm text-white/60">Date</span>
+          <span className="text-sm text-white/60">Folder</span>
           <span
             className={`text-nowrap text-sm font-semibold
             text-white underline ml-5`}
           >
-            {`${String(props.createdAt.getDate()).padStart(2, "0")}/${String(
-              props.createdAt.getMonth()
-            ).padStart(2, "0")}/${props.createdAt.getFullYear()}`}
+            {props.folder}
           </span>
         </div>
       </div>

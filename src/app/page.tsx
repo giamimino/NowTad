@@ -17,6 +17,7 @@ export default function Home() {
     title: string;
     id: string;
     folderId: string,
+    createdAt: string,
   } | null>(null);
   const sessionContext = useContext(SessionContext);
   const { user, setUser } = sessionContext ?? {
@@ -76,7 +77,8 @@ export default function Home() {
     setSelectedNote({
       id: note.id,
       folderId: note.folderId,
-      title: note.title
+      title: note.title,
+      createdAt: note.createdAt,
     });
   };
 
@@ -147,6 +149,7 @@ export default function Home() {
 
   const filteredNotesbyFolder = useMemo(() => {
     if (!user) return [];
+    setSelectedNote(null)
     return user.folders.find((f) => f.id === selectedFolder?.id)?.notes;
   }, [user, selectedFolder]);
 
@@ -166,11 +169,16 @@ export default function Home() {
         notes={filteredNotesbyFolder ?? []}
         handleSelectNote={handleNoteSelect}
         currentNote={selectedNote}
-
       />
-      <NotesContext.Provider
-        value={{ content, setContent }}
-      ></NotesContext.Provider>
+        {selectedNote && (
+          <Editor
+            title={selectedNote.title as string}
+            noteId={selectedNote.id as string}
+            folderId={selectedNote.folderId as string}
+            folder={selectedFolder?.title ?? ""}
+            createdAt={new Date(selectedNote.createdAt)}
+          />
+        )}
     </div>
   );
 }

@@ -1,7 +1,11 @@
 export interface NoteContext {
-  noteId: string,
-  content: object,
-  folderId: string,
+  id: string,
+  title: string,
+  preview: string,
+  createdAt: string,
+  updatedAt: string,
+  folderId: string
+  content: object
 } 
 
 export interface User {
@@ -20,6 +24,7 @@ export interface NotePreview {
   createdAt: string,
   updatedAt: string,
   folderId: string
+  content: object
 }
 
 export interface Recents {
