@@ -1,11 +1,12 @@
 "use client";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import SideBarNav from "./components/SideBarNav";
 import NotesList from "./components/NotesList";
 import Editor from "./components/Editor";
 import { NotesContext } from "./context/NotesContext";
 import { NoteContext, NotePreview } from "./global";
 import { SessionContext } from "./context/SessionContext";
+import Save from "./components/save";
 
 export default function Home() {
   const [content, setContent] = useState<NoteContext[]>([]);
@@ -139,20 +140,19 @@ export default function Home() {
     }
   };
 
-  useEffect(() => {
-    console.log("Updated user:", user);
-  }, [user]);
-  useEffect(() => {
-    console.log("Selected note is:", selectedNote?.title);
-  }, [selectedNote]);
-
+  const getNote = useCallback(async (note: NoteContext) => {
+    setContent((prev) => prev && !prev.some((n) => n.id === note.id)
+      ? [...(prev || []), {...note, isChanged: false}]
+      : prev
+    )
+  }, [])
 
   const filteredNotesbyFolder = useMemo(() => {
     if (!user) return [];
     setSelectedNote(null)
     return user.folders.find((f) => f.id === selectedFolder?.id)?.notes;
   }, [user, selectedFolder]);
-
+  
   return (
     <div className="flex overflow-hidden h-full w-full">
       <SideBarNav
@@ -163,13 +163,20 @@ export default function Home() {
         onSelect={handleFolderSelect}
         handleTrashDelete={handleTrashDelete}
         handleNewNote={handleNewNote}
-      />
+        />
       <NotesList
         folder={selectedFolder?.title ?? "No Folder is Selected"}
         notes={filteredNotesbyFolder ?? []}
         handleSelectNote={handleNoteSelect}
         currentNote={selectedNote}
-      />
+        getNote={getNote}
+        />
+      <NotesContext.Provider value={{ content, setContent }}>
+        {content.some((c) => c.isChanged === true) && selectedFolder && (
+          <Save
+            folderId={selectedFolder?.id}
+          />
+        )}
         {selectedNote && (
           <Editor
             title={selectedNote.title as string}
@@ -179,6 +186,7 @@ export default function Home() {
             createdAt={new Date(selectedNote.createdAt)}
           />
         )}
+      </NotesContext.Provider>
     </div>
   );
 }

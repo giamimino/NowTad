@@ -1,11 +1,10 @@
 export interface NoteContext {
   id: string,
   title: string,
-  preview: string,
   createdAt: string,
-  updatedAt: string,
   folderId: string
-  content: object
+  content: JSONContent
+  isChanged: boolean
 } 
 
 export interface User {

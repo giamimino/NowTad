@@ -6,6 +6,7 @@ import StarterKit from "@tiptap/starter-kit";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import useDebounce from "../hooks/useDebounce";
 import { NotesContext } from "../context/NotesContext";
+import { NoteContext } from "../global";
 
 interface EditorProps {
   title: string;
@@ -26,19 +27,32 @@ export default function Editor(props: EditorProps) {
     if (!debouncedContent) return;
     const exist = content.some((n) => n.id === props.noteId)
 
-    setContent((prev) =>
-    [
-      ...prev,
-      {
-        title: props.title,
-        id: props.noteId,
-        createdAt: props.createdAt,
-        updatedAt: props.createdAt,
-        folderId: props.folder,
-        content: debouncedContent,
-      }
-    ]
-    );
+    if(exist) {
+      const newContent = content.map(
+        (c) => c.id === props.noteId ?
+        {
+          ...c,
+          content: debouncedContent,
+          isChanged: true,
+        } : c
+      )
+      setContent(newContent)
+    } else {
+      const newContent = [
+          ...content,
+          {
+            title: props.title,
+            id: props.noteId,
+            createdAt: props.createdAt.toISOString(),
+            folderId: props.folder,
+            content: debouncedContent,
+            isChanged: false,
+          }
+        ]
+      setContent(newContent)
+    }
+    console.log(debouncedContent);
+    
   }, [debouncedContent]);
 
   const note = useMemo(() => {
@@ -158,7 +172,7 @@ export default function Editor(props: EditorProps) {
       </div>
       <EditorContent
         editor={editor}
-        className="prose prose-invert text-white max-w-none noFocus"
+        className="text-white noFocus"
       />
     </div>
   );
