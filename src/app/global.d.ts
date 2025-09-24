@@ -5,6 +5,7 @@ export interface NoteContext {
   folderId: string
   content: JSONContent
   isChanged: boolean
+  preview?: string
 } 
 
 export interface User {
@@ -28,7 +29,8 @@ export interface NotePreview {
 
 export interface Recents {
   id: string,
-  label: string
+  title: string,
+  updatedAt: string,
 }
 
 export interface Folder {

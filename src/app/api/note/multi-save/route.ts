@@ -12,22 +12,18 @@ function errorResponse(message: string) {
 export async function POST(req: Request) {
   try {
     const {
-      folderId, 
       notes
     }: { 
-      folderId: string, 
       notes:  NoteContext[]
     } = await req.json()
-    if(!folderId || !notes) return errorResponse("There is nothing so save.")
+    if(!notes) return errorResponse("There is nothing so save.")
 
     const requests = notes.map((note) => 
       prisma.note.update({
         where: { id: note.id },
         data: {
-          title: note.title,
           content: note.content,
-          folder: { connect: {id: folderId} },
-          preview: note.content.content[0].content[0].text
+          preview: note.preview
         },
         select: {
           id: true,

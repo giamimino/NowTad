@@ -1,3 +1,4 @@
+"use client";
 import { Icon } from "@iconify/react";
 import React, { useRef, useState } from "react";
 import File from "./ui/File";
@@ -7,18 +8,33 @@ import NewNoteForm from "./ui/NewNoteForm";
 
 interface SideBarNavProps {
   folder: { title: string; id: string }[];
-  recents: { label: string; id: string }[];
+  recents: {
+    title: string;
+    id: string;
+    folderId: string;
+    createdAt: string;
+  }[];
   userId: string;
   handleNewFolder: (title: string) => void;
   handleNewNote: (title: string) => void;
   onSelect: (id: string) => void;
-  handleTrashDelete: (id: string) => void
+  handleTrashDelete: (id: string) => void;
+  handleNoteSelect: (
+    note: {
+      title: string;
+      id: string;
+      folderId: string;
+      createdAt: string;
+    },
+    select: "unSelect" | "select"
+  ) => void;
 }
 
 export default function SideBarNav(sideBarNavProps: SideBarNavProps) {
   const [newFolder, setNewFolder] = useState(false);
   const [newNote, setNewNote] = useState(false);
   const [currentFolder, setCurrentFolder] = useState("");
+  const [currentNote, setCurrentNote] = useState("");
   const trashRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const moreProps = [
@@ -42,7 +58,7 @@ export default function SideBarNav(sideBarNavProps: SideBarNavProps) {
       </div>
       <div className="px-5">
         <button
-        onClick={() => setNewNote(prev => !prev)}
+          onClick={() => setNewNote((prev) => !prev)}
           className="w-full bg-white/5 p-2.5 flex items-center justify-center
         gap-2 text-white duration-300 font-semibold cursor-pointer rounded-[3px] ringHover-1"
         >
@@ -62,7 +78,16 @@ export default function SideBarNav(sideBarNavProps: SideBarNavProps) {
             />
           )}
           {sideBarNavProps.recents.map((r) => (
-            <File {...r} select={false} />
+            <File
+              note={r}
+              select={currentNote === r.id}
+              key={r.id}
+              onSelect={(...args) => {
+                setCurrentFolder(args[0].folderId)
+                setCurrentNote(args[0].id);
+                sideBarNavProps.handleNoteSelect(...args);
+              }}
+            />
           ))}
         </div>
       </div>

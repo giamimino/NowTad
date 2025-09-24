@@ -6,7 +6,6 @@ import StarterKit from "@tiptap/starter-kit";
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import useDebounce from "../hooks/useDebounce";
 import { NotesContext } from "../context/NotesContext";
-import { NoteContext } from "../global";
 
 interface EditorProps {
   title: string;
@@ -22,11 +21,13 @@ export default function Editor(props: EditorProps) {
   const [curFont, setCurFont] = useState(16);
   const [editorContent, setEditorContent] = useState<JSONContent | null>(null);
   const debouncedContent = useDebounce(editorContent, 500);
-
+  const [openSettings, setOpenSettings] = useState(false)
+  
+  
   useEffect(() => {
     if (!debouncedContent) return;
     const exist = content.some((n) => n.id === props.noteId)
-
+    
     if(exist) {
       const newContent = content.map(
         (c) => c.id === props.noteId ?
@@ -38,8 +39,9 @@ export default function Editor(props: EditorProps) {
       )
       setContent(newContent)
     } else {
+      const preview = debouncedContent?.content?.[0]?.content?.[0]?.text ?? "";
       const newContent = [
-          ...content,
+        ...content,
           {
             title: props.title,
             id: props.noteId,
@@ -47,20 +49,19 @@ export default function Editor(props: EditorProps) {
             folderId: props.folder,
             content: debouncedContent,
             isChanged: false,
+            preview
           }
         ]
-      setContent(newContent)
-    }
-    console.log(debouncedContent);
+        setContent(newContent)
+      }
+    }, [debouncedContent]);
     
-  }, [debouncedContent]);
-
-  const note = useMemo(() => {
-    const result = content.find((n) => n.id === props.noteId);
-
-    return result;
-  }, [content]);
-
+    const note = useMemo(() => {
+      const result = content.find((n) => n.id === props.noteId);
+      
+      return result;
+    }, [content, props]);
+  
   const editor = useEditor({
     extensions: [StarterKit, TextStyle, FontSize],
     content: note?.content ?? "",
@@ -68,14 +69,20 @@ export default function Editor(props: EditorProps) {
     onUpdate: ({ editor }) => {
       setEditorContent(editor.getJSON());
     },
-  });
-
+  }, [note]);
+  
   useEffect(() => {
     if (curFont === 0 || !curFont) return;
     editor?.chain().focus().setFontSize(`${curFont}px`).run();
   }, [curFont]);
   return (
-    <div className="p-12.5 flex flex-col gap-7.5 w-full h-full">
+    <div className="p-12.5 flex flex-col gap-7.5 w-full h-full relative">
+      <div className={`absolute text-white w-7.5 h-7.5 rounded-full
+      flex justify-center items-center top-12.5 right-12.5 border-1 border-white cursor-pointer
+      ${openSettings ? " opacity-100" : "opacity-60"} hover:opacity-70`}
+      onClick={() => setOpenSettings(prev => !prev)}>
+        <Icon icon={"tabler:dots"} />
+      </div>
       <h1 className="text-nowrap text-white text-3xl font-semibold">
         {props.title}
       </h1>

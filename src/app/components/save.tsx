@@ -3,21 +3,19 @@ import React, { useContext, useState } from 'react'
 import { motion } from 'framer-motion'
 import { NotesContext } from '../context/NotesContext'
 
-interface Props {
-  folderId: string
-}
-
-export default function Save(props: Props) {
+export default function Save() {
   const [dragging, setDragging] = useState(false)
   const notesContext = useContext(NotesContext)
   if (!notesContext) return null;
   const { content, setContent } = notesContext
 
   const saveAll = async () => {
+    const filteredNotes = content.filter((c) => c.isChanged === true)
+    
     const res = await fetch("/api/note/multi-save", {
       method: "POST",
       headers: { "Content-Type": 'Application/json' },
-      body: JSON.stringify({ folderId: props.folderId, notes: content })
+      body: JSON.stringify({ notes: filteredNotes })
     })
     const result = await res.json()
     if(result.success) {
