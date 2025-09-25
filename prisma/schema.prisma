@@ -24,7 +24,7 @@ model User {
 model Favorite {
   id        String   @id @default(cuid())
   userId    String
-  noteId    String
+  noteId    String   @unique
   user      User     @relation(fields: [userId], references: [id])
   createdAt DateTime @default(now())
 }

@@ -1,10 +1,5 @@
 "use client";
-import React, {
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-} from "react";
+import React, { useCallback, useContext, useMemo, useState } from "react";
 import SideBarNav from "./components/SideBarNav";
 import NotesList from "./components/NotesList";
 import Editor from "./components/Editor";
@@ -148,32 +143,6 @@ export default function Home() {
     );
   }, []);
 
-  const handleReacentNoteSelect = (
-    note: {
-      title: string;
-      id: string;
-      folderId: string;
-      createdAt: string;
-    },
-    select: "unSelect" | "select"
-  ) => {
-    if (select === "select") {
-      setSelectedNote({
-        id: note.id, 
-        title: note.title,
-        folderId: note.folderId,
-        createdAt: note.createdAt
-      });
-      setSelectedFolder({
-        id: note.folderId,
-        title: user?.folders.find((f) => f.id === note.folderId)?.title ?? ""
-      })
-    } else {
-      setSelectedNote(null);
-      setSelectedFolder(null)
-    }
-  };
-
   const filteredNotesbyFolder = useMemo(() => {
     if (!user) return [];
     setSelectedNote(null);
@@ -190,15 +159,13 @@ export default function Home() {
     if (!user) return;
     let result: {
       title: string;
-      id: string;
-      folderId: string;
-      createdAt: string;
       updatedAt: string;
+      id: string;
     }[] = [];
     let acc = 0;
     for (let i = 0; i < user.folders.length; i++) {
       for (let j = 0; j < user.folders[i].notes.length; j++) {
-        if (acc >= 0 && acc <= 5) {
+        if (acc >= 0 && acc <= 5 && user.folders[i].title !== "Favorites") {
           result.push({
             ...user.folders[i].notes[j],
           });
@@ -212,6 +179,151 @@ export default function Home() {
     );
   }, [user]);
 
+  const handleNoteDelete = (id: string) => {
+    if (!user) return;
+    setSelectedNote(null);
+    setContent((prev) => (prev ? prev.filter((c) => c.id !== id) : prev));
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            folders: prev.folders.map((f) =>
+              f
+                ? {
+                    ...f,
+                    notes: f.notes.filter((n) => n.id !== id),
+                  }
+                : f
+            ),
+          }
+        : prev
+    );
+  };
+
+  const handleCreateFavorite = useCallback(
+    async (noteId: string) => {
+      if (!user) return;
+      const res = await fetch("/api/note/create/favorite", {
+        method: "POST",
+        headers: { "Content-Type": "Application/json" },
+        body: JSON.stringify({ noteId, userId: user.id }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setUser((prev) => {
+          if (!prev) return prev;
+
+          const noteToAdd = prev.folders
+            .flatMap((f) => f.notes)
+            .find((n) => n.id === noteId);
+
+          if (!noteToAdd) return prev;
+
+          const existingFavorites = prev.folders.find(
+            (f) => f.id === result.favoriteId
+          );
+
+          return {
+            ...prev,
+            folders: [
+              ...prev.folders.filter((f) => f.id !== result.favoriteId),
+              {
+                title: "Favorites",
+                id: result.favoriteId,
+                notes: [...(existingFavorites?.notes ?? []), noteToAdd],
+              },
+            ],
+          };
+        });
+      } else {
+        alert(result.message || "Something went wrong.");
+      }
+    },
+    [user?.id]
+  );
+
+  const handleRemoveFavorite = async (favoriteId: string) => {
+      if (!user) return;
+      const res = await fetch("/api/note/delete/favorite", {
+        method: "POST",
+        headers: { "Content-Type": "Application/json" },
+        body: JSON.stringify({ favoriteId }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setUser((prev) => {
+          if (!prev) return prev;
+
+          const filteredFavorite = prev.folders
+            .find(
+              (f) => f.id === result.favoriteId
+            )?.notes
+            .filter(
+              (n) => n.id !== result.favorite.noteId
+            )
+
+          return {
+            ...prev,
+            folders: [
+              ...prev.folders.filter((f) => f.id !== result.favorite.id),
+              {
+                title: "Favorites",
+                id: result.favorite.id,
+                notes: [...(filteredFavorite ?? [])],
+              },
+            ],
+          };
+        });
+      } else {
+        alert(result.message || "Something went wrong.");
+      }
+    }
+
+  const handleGetFavorites = useCallback(
+    (favoriteId: string, favorites: { id: string; noteId: string }[]) => {
+      setUser(prev => {
+        if (!prev) return prev;
+
+        const favoriteFolder = prev.folders.some(f => f.id === favoriteId);
+        const allNotes = prev.folders
+          .flatMap((f) => f.notes)
+          .filter((n) => favorites.some((fav) => n.id === fav.noteId))
+
+        if(favoriteFolder) {
+          return {
+            ...prev,
+            folders: prev.folders.map(f => 
+              f.id === favoriteId
+                ? { 
+                    ...f, 
+                    notes: [...(f.notes ?? []), ...allNotes] 
+                  }
+                : f
+            ),
+          };
+        } else {
+          const newFolder = {
+            id: favoriteId,
+            title: "Favorites",
+            notes: [...allNotes],
+          };
+          return {
+            ...prev,
+            folders: [...prev.folders, newFolder]
+          }
+        }
+
+      });
+      setSelectedFolder(
+        {
+          title: "Favorites",
+          id: favoriteId
+        }
+      )
+    },
+    []
+  );
+
   return (
     <div className="flex overflow-hidden h-full w-full">
       <SideBarNav
@@ -222,7 +334,7 @@ export default function Home() {
         onSelect={handleFolderSelect}
         handleTrashDelete={handleTrashDelete}
         handleNewNote={handleNewNote}
-        handleNoteSelect={handleReacentNoteSelect}
+        handleGetFavorites={handleGetFavorites}
       />
       <NotesList
         folder={selectedFolder?.title ?? "No Folder is Selected"}
@@ -231,6 +343,7 @@ export default function Home() {
         currentNote={selectedNote}
         getNote={getNote}
         fetchThis={!fetchThis}
+        handleRemoveFav={handleRemoveFavorite}
       />
       <NotesContext.Provider value={{ content, setContent }}>
         {content.some((c) => c.isChanged === true) && <Save />}
@@ -241,6 +354,8 @@ export default function Home() {
             folderId={selectedNote.folderId as string}
             folder={selectedFolder?.title ?? ""}
             createdAt={new Date(selectedNote.createdAt)}
+            handleNoteDelete={handleNoteDelete}
+            handleCreateFav={handleCreateFavorite}
           />
         )}
       </NotesContext.Provider>

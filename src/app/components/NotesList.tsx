@@ -11,6 +11,7 @@ interface PageProps {
   currentNote: {id: string, title: string, folderId: string } | null,
   fetchThis: boolean
   getNote: (note: NoteContext) => void
+  handleRemoveFav: (favoriteId: string) => void
 }
 export default function NotesList(props: PageProps) {
   const [cur, setCur] = useState("")
@@ -32,6 +33,8 @@ export default function NotesList(props: PageProps) {
                 setCur(id)
                 props.handleSelectNote(id, folderId)
               }}
+              {...props.folder === "Favorites" && { handleRemoveFav: props.handleRemoveFav }}
+              type={props.folder === "Favorites" ? "Favorite" : "Default"}
             />
           )
         )}

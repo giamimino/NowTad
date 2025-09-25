@@ -5,42 +5,32 @@ import File from "./ui/File";
 import NewFolderForm from "./ui/NewFolderForm";
 import DraggableFolder from "./ui/DraggableFolder";
 import NewNoteForm from "./ui/NewNoteForm";
+import fetchFavorites from "@/functions/fetchFavorite";
 
 interface SideBarNavProps {
   folder: { title: string; id: string }[];
   recents: {
     title: string;
-    id: string;
-    folderId: string;
-    createdAt: string;
+    id: string,
+    updatedAt: string
   }[];
   userId: string;
   handleNewFolder: (title: string) => void;
   handleNewNote: (title: string) => void;
   onSelect: (id: string) => void;
   handleTrashDelete: (id: string) => void;
-  handleNoteSelect: (
-    note: {
-      title: string;
-      id: string;
-      folderId: string;
-      createdAt: string;
-    },
-    select: "unSelect" | "select"
-  ) => void;
+  handleGetFavorites: (favoriteId: string, favorites: {id: string, noteId: string}[]) => void
 }
 
 export default function SideBarNav(sideBarNavProps: SideBarNavProps) {
   const [newFolder, setNewFolder] = useState(false);
   const [newNote, setNewNote] = useState(false);
   const [currentFolder, setCurrentFolder] = useState("");
-  const [currentNote, setCurrentNote] = useState("");
   const trashRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const moreProps = [
     { icon: "tabler:star", label: "Favorites" },
     { icon: "uil:trash", label: "Trash" },
-    { icon: "flowbite:archive-outline", label: "Archived Notes" },
   ];
 
   return (
@@ -79,14 +69,8 @@ export default function SideBarNav(sideBarNavProps: SideBarNavProps) {
           )}
           {sideBarNavProps.recents.map((r) => (
             <File
-              note={r}
-              select={currentNote === r.id}
+              title={r.title}
               key={r.id}
-              onSelect={(...args) => {
-                setCurrentFolder(args[0].folderId)
-                setCurrentNote(args[0].id);
-                sideBarNavProps.handleNoteSelect(...args);
-              }}
             />
           ))}
         </div>
@@ -134,6 +118,12 @@ export default function SideBarNav(sideBarNavProps: SideBarNavProps) {
               className={`flex py-2.5 gap-3.75 px-5`}
               key={m.label}
               ref={m.label === "Trash" ? trashRef : null}
+              onClick={m.label === "Favorites" ? async () => {
+                setCurrentFolder("")
+                const result = await fetchFavorites(sideBarNavProps.userId)
+                setCurrentFolder(result[0].id)
+                sideBarNavProps.handleGetFavorites(result[0].id, result)
+              } : undefined}
             >
               <Icon icon={m.icon} className="text-xl text-white/60" />
               <span className="smallH-1">{m.label}</span>
