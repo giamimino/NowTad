@@ -5,7 +5,7 @@ import { NoteContext, NotePreview } from "../global";
 import fetchDate from "@/functions/fetchDate";
 
 interface PageProps {
-  folder: String;
+  folder: string
   notes: NotePreview[]
   handleSelectNote: (id: string, folderId: string) => void
   currentNote: {id: string, title: string, folderId: string } | null,
@@ -23,7 +23,7 @@ export default function NotesList(props: PageProps) {
         {props.notes.map(
           (n) => (
             <Note
-              key={n.id}
+              key={`${n.id}-${n.folderId}-${n.title}`}
               select={props.currentNote?.id === cur ? true : false}
               props={n}
               onSelect={async (id: string, folderId: string) => {

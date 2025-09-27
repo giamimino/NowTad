@@ -3,7 +3,7 @@ import { Icon } from "@iconify/react";
 import { FontSize, TextStyle } from "@tiptap/extension-text-style";
 import { EditorContent, JSONContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import React, { useCallback, useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useState } from "react";
 import useDebounce from "../hooks/useDebounce";
 import { NotesContext } from "../context/NotesContext";
 import { AnimatePresence, motion } from "framer-motion";
@@ -18,13 +18,43 @@ interface EditorProps {
   handleCreateFav: (noteId: string) => void
 }
 export default function Editor(props: EditorProps) {
-  const notesContext = useContext(NotesContext);
-  if (!notesContext) return null;
-  const { content, setContent } = notesContext;
   const [curFont, setCurFont] = useState(16);
   const [editorContent, setEditorContent] = useState<JSONContent | null>(null);
-  const debouncedContent = useDebounce(editorContent, 500);
   const [openSettings, setOpenSettings] = useState(false);
+  const debouncedContent = useDebounce(editorContent, 500);
+  
+  const notesContext = useContext(NotesContext);
+  const { content, setContent } = notesContext ?? { content: [], setContent: () => {} };
+  
+  const note = useMemo(() => {
+    return content.find((n) => n.id === props.noteId);
+  }, [content, props.noteId]);
+  
+  const editor = useEditor(
+    {
+      extensions: [StarterKit, TextStyle, FontSize],
+      content: note?.content ?? "",
+      immediatelyRender: false,
+      onUpdate: ({ editor }) => {
+        setEditorContent(editor.getJSON());
+      },
+    },
+    [note]
+  );
+  
+  const handleNoteDelete = async () => {
+    const res = await fetch("/api/note/delete", {
+      method: "POST",
+      headers: {"Content-Type": 'Application/json'},
+      body: JSON.stringify({ noteId: props.noteId })
+    })
+    const result = await res.json()
+    if(result.success) {
+      props.handleNoteDelete(result.noteId)
+    } else {
+      alert(result.message || "Something went wrong.")
+    }
+  }
 
   useEffect(() => {
     if (!debouncedContent) return;
@@ -57,44 +87,18 @@ export default function Editor(props: EditorProps) {
       ];
       setContent(newContent);
     }
-  }, [debouncedContent]);
+  }, [debouncedContent, content, props.createdAt, props.noteId, props.title, setContent, props.folder]);
 
-  const note = useMemo(() => {
-    const result = content.find((n) => n.id === props.noteId);
-
-    return result;
-  }, [content, props]);
-
-  const editor = useEditor(
-    {
-      extensions: [StarterKit, TextStyle, FontSize],
-      content: note?.content ?? "",
-      immediatelyRender: false,
-      onUpdate: ({ editor }) => {
-        setEditorContent(editor.getJSON());
-      },
-    },
-    [note]
-  );
 
   useEffect(() => {
     if (curFont === 0 || !curFont) return;
     editor?.chain().focus().setFontSize(`${curFont}px`).run();
-  }, [curFont]);
+  }, [curFont, editor]);
 
-  const handleNoteDelete = useCallback(async () => {
-    const res = await fetch("/api/note/delete", {
-      method: "POST",
-      headers: {"Content-Type": 'Application/json'},
-      body: JSON.stringify({ noteId: props.noteId })
-    })
-    const result = await res.json()
-    if(result.success) {
-      props.handleNoteDelete(result.noteId)
-    } else {
-      alert(result.message || "Something went wrong.")
-    }
-  }, [props.noteId])
+  if (!notesContext) {
+    return <div>Loading...</div>;
+  }
+
   return (
     <div className="p-12.5 flex flex-col gap-7.5 w-full h-full relative">
       <div className="relative select-none">

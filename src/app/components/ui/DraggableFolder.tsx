@@ -24,9 +24,7 @@ function DraggableFolder({
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const spring = { type: "spring", stiffness: 300, damping: 28 };
-
-  function handleDragEnd(_e: any, info: PanInfo) {
+  function handleDragEnd(_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
     if (!trashRef.current) {
       animate(x, 0, {type: "spring", stiffness: 200 });
       animate(y, 0, {type: "spring", stiffness: 200 });
@@ -44,7 +42,7 @@ function DraggableFolder({
     }
   }
 
-  function handleDrag(_e: any, info: PanInfo) {
+  function handleDrag(_e: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) {
     if (!trashRef.current) {
       animate(x, 0, {type: "spring", stiffness: 200 });
       animate(y, 0, {type: "spring", stiffness: 200 });

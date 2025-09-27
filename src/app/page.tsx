@@ -54,19 +54,22 @@ export default function Home() {
         alert(result.message || "Something went wrong");
       }
     },
-    [user?.id]
+    [user?.id, setUser]
   );
 
   const handleFolderSelect = (id: string) => {
+    setSelectedNote(null)
     const folder = user?.folders.find((f) => f.id === id);
+    if(!folder) return
 
     setSelectedFolder({
       id,
-      title: folder?.title ?? "No Folder is Selected",
+      title: folder.title,
     });
   };
 
   const handleNoteSelect = (id: string, folderId: string) => {
+    setSelectedNote(null)
     const folder = user?.folders.find((f) => f.id === folderId);
     const note = folder?.notes.find((n) => n.id === id);
     if (!folder || !note) return;
@@ -100,7 +103,7 @@ export default function Home() {
         alert(result.message ?? "Something went wrong.");
       }
     },
-    [user?.id]
+    [user?.id, setUser]
   );
 
   const handleNewNote = async (title: string) => {
@@ -153,31 +156,21 @@ export default function Home() {
     const exist = content.some((c) => c.id === selectedNote?.id);
 
     return exist;
-  }, [selectedNote]);
+  }, [selectedNote, content]);
 
   const recents = useMemo(() => {
     if (!user) return;
-    let result: {
+    const result: {
       title: string;
       updatedAt: string;
       id: string;
-    }[] = [];
-    let acc = 0;
-    for (let i = 0; i < user.folders.length; i++) {
-      for (let j = 0; j < user.folders[i].notes.length; j++) {
-        if (acc >= 0 && acc <= 5 && user.folders[i].title !== "Favorites") {
-          result.push({
-            ...user.folders[i].notes[j],
-          });
-          acc++;
-        }
-      }
-    }
+    }[] = user.folders.flatMap((f) => f.title !== "Favorites" ? f.notes : [])
     return result.sort(
       (a, b) =>
-        new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime()
-    );
+        new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    ).splice(0, 3)
   }, [user]);
+  
 
   const handleNoteDelete = (id: string) => {
     if (!user) return;
@@ -239,7 +232,7 @@ export default function Home() {
         alert(result.message || "Something went wrong.");
       }
     },
-    [user?.id]
+    [setUser, user]
   );
 
   const handleRemoveFavorite = async (favoriteId: string) => {
@@ -321,7 +314,7 @@ export default function Home() {
         }
       )
     },
-    []
+    [setUser]
   );
 
   return (
@@ -335,9 +328,11 @@ export default function Home() {
         handleTrashDelete={handleTrashDelete}
         handleNewNote={handleNewNote}
         handleGetFavorites={handleGetFavorites}
+        handleNoteSelect={handleNoteSelect}
+        getNote={getNote}
       />
       <NotesList
-        folder={selectedFolder?.title ?? "No Folder is Selected"}
+        folder={selectedFolder?.title || "No Folder is Selected"}
         notes={filteredNotesbyFolder ?? []}
         handleSelectNote={handleNoteSelect}
         currentNote={selectedNote}
